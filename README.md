@@ -3,6 +3,9 @@
 ## Dataset Overview
 For this study, the open-source **Skin Cancer MNIST: HAM 10000 (Human Against Machine)** dataset will be used. It contains 10,000 dermoscopic images of pigmented skin lesions, with seven types of skin lesions namely: Basal cell carcinoma (BCC), actinic keratoses (AKIEC), benign keratosis (BKL), skin fibroma (DF), melanocytic nevus (NV), melanomas (MEL), and vascular skin lesion (VASC). All the images are in `.jpg` format, typically in colour (RGB), which represents the visual appearance of the skin lesions.
 
+Dataset Link: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DBW86T
+
+
 ## Steps Taken So Far
 
 1. **Dataset Loading and Preprocessing**:
