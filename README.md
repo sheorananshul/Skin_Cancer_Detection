@@ -15,12 +15,22 @@ For this study, the open-source **Skin Cancer MNIST: HAM 10000 (Human Against Ma
    - Images are displayed at their original resolution without resizing to maintain their quality.
    - **Matplotlib** is used to create subplots and visualize the sampled images, and we save the final plot at **DPI 500** to ensure high-quality output.
 
-3. **Category Distribution**:
-   - We display the distribution of categories (`dx`) to understand the balance between different skin lesion types.
-   - The data is grouped by the `dx` column, and a specified number of samples per category are visualized.
+     
+3. **Data Cleaning**
+   - **Handling Missing Age Values**: The dataset has missing values for the `'age'` feature. These missing values are filled with the mean age of all patients to maintain consistency and avoid dropping rows with missing data.
 
-4. **Saving Visuals**:
-   - The final image visualization grid is saved as `category_samples.png`, with high resolution for detailed analysis.
+   
+5. **Data Visualization**
+This section visualizes key features of the **HAM10000** dataset to understand the distribution of skin lesions:
+
+- **Skin Lesion Types (`'dx'`)**: A bar plot showing the distribution of different lesion types like BCC, AKIEC, BKL, etc.
+- **Lesion Localization (`'localization'`)**: A bar plot showing where skin lesions are most commonly located on the body.
+- **Sex Distribution (`'sex'`)**: A bar plot showing the gender distribution of patients with skin lesions.
+- **Age Distribution (`'age'`)**: A histogram visualizing the age range of patients affected by skin lesions.
+
+These visualizations help to better understand the dataset’s structure and guide further analysis.
+
+
 
 ## Future Steps:
 - **Data Augmentation**: To enhance model performance, we can implement augmentation techniques such as rotation, flipping, and zooming.
