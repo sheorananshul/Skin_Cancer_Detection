@@ -1,7 +1,7 @@
 # Skin Lesion Classification
 
 ## Dataset Overview
-This project utilizes the **HAM10000** dataset, a collection of skin lesion images. The dataset contains **10,000 images** labeled with the diagnosis (`dx`) for each skin lesion. The images in the dataset come from multiple categories, each representing a different type of skin condition. The images are in `.jpg` format and vary in size, with some being resized for visualization.
+For this study, the open-source **Skin Cancer MNIST: HAM 10000 (Human Against Machine)** dataset will be used. It contains 10,000 dermoscopic images of pigmented skin lesions, with seven types of skin lesions namely: Basal cell carcinoma (BCC), actinic keratoses (AKIEC), benign keratosis (BKL), skin fibroma (DF), melanocytic nevus (NV), melanomas (MEL), and vascular skin lesion (VASC). All the images are in `.jpg` format, typically in colour (RGB), which represents the visual appearance of the skin lesions.
 
 ## Steps Taken So Far
 
