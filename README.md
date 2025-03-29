@@ -39,7 +39,11 @@ This section describes the deep learning models used for skin lesion classificat
 
 - **ResNet50**: A deep neural network with 50 layers and residual connections that improve accuracy and prevent the vanishing gradient problem, making deep models more trainable.  
 - **InceptionV3**: A deep learning model that uses multiple kernel sizes in a single layer to capture diverse spatial features, enhancing classification performance.  
-- **DenseNet121**: A densely connected convolutional network with 121 layers, where each layer is connected to every other layer, improving feature reuse, gradient flow, and model efficiency.  
+- **DenseNet121**: A densely connected convolutional network with 121 layers, where each layer is connected to every other layer, improving feature reuse, gradient flow, and model efficiency.
+
+  ![flowdiagram](https://github.com/user-attachments/assets/0bd792fa-1991-4ac8-b123-3bc4504ab0ae)
+  
+
 
 ### Model Training Workflow
 
