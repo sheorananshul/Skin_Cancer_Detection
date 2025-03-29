@@ -31,7 +31,15 @@ This section visualizes key features of the **HAM10000** dataset to understand t
 - **Sex Distribution (`'sex'`)**: A bar plot showing the gender distribution of patients with skin lesions.
 - **Age Distribution (`'age'`)**: A histogram visualizing the age range of patients affected by skin lesions.
 
-These visualizations help to better understand the dataset’s structure and guide further analysis.
+These visualizations help to better understand the dataset’s structure and guide further analysis
+
+6. **Model Training**  
+This section describes the deep learning models used for skin lesion classification:  
+
+- **ResNet**: A deep neural network with residual connections that improve accuracy and prevent the vanishing gradient problem, making deep models more trainable.  
+- **InceptionV3**: Uses multiple kernel sizes in a single layer to capture diverse spatial features, enhancing classification performance.  
+- **DenseNet**: A densely connected convolutional network where each layer is connected to every other layer, improving feature reuse, gradient flow, and model efficiency.  
+
 
 
 
