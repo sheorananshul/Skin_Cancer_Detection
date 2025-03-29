@@ -14,7 +14,7 @@ Dataset Link: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.79
    - Each image is read using the `PIL` library and stored in the `skin_df` DataFrame.
 
 2. **Image Visualization**:
-   - We sample **5 images** from each category (`dx`) and display them in a grid.
+   - Sampled **5 images** from each category (`dx`) and display them in a grid.
    - Images are displayed at their original resolution without resizing to maintain their quality.
    - **Matplotlib** is used to create subplots and visualize the sampled images, and we save the final plot at **DPI 500** to ensure high-quality output.
 
@@ -46,11 +46,8 @@ This section describes the deep learning models used for skin lesion classificat
 - **Data Split**: The dataset is split into training and test sets with an 80-20 ratio using `train_test_split`.
 - **Training the Models**: The models are trained using the `fit` method, with early stopping based on validation loss to prevent overfitting.
 
+7. **BERT model**
+In the upcoming weeks, we will extend the current model by extracting features using BERT for the dx_type and localization columns of the HAM10000 dataset. These features will be used to combine with other baseline model features for improved classification.
 
 
-
-
-## Future Steps:
-- **Data Augmentation**: To enhance model performance, we can implement augmentation techniques such as rotation, flipping, and zooming.
-- **Model Training**: We plan to apply machine learning or deep learning models for skin lesion classification based on this dataset.
-- **Evaluation and Metrics**: We will evaluate the model's performance using metrics like accuracy, precision, recall, and F1-score.
+- 
