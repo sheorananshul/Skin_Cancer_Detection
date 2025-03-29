@@ -33,12 +33,19 @@ This section visualizes key features of the **HAM10000** dataset to understand t
 
 These visualizations help to better understand the dataset’s structure and guide further analysis
 
-6. **Model Training**  
+
+ 6. **Model Training**  
 This section describes the deep learning models used for skin lesion classification:  
 
-- **ResNet**: A deep neural network with residual connections that improve accuracy and prevent the vanishing gradient problem, making deep models more trainable.  
-- **InceptionV3**: Uses multiple kernel sizes in a single layer to capture diverse spatial features, enhancing classification performance.  
-- **DenseNet**: A densely connected convolutional network where each layer is connected to every other layer, improving feature reuse, gradient flow, and model efficiency.  
+- **ResNet50**: A deep neural network with 50 layers and residual connections that improve accuracy and prevent the vanishing gradient problem, making deep models more trainable.  
+- **InceptionV3**: A deep learning model that uses multiple kernel sizes in a single layer to capture diverse spatial features, enhancing classification performance.  
+- **DenseNet121**: A densely connected convolutional network with 121 layers, where each layer is connected to every other layer, improving feature reuse, gradient flow, and model efficiency.  
+
+### Model Training Workflow
+
+- **Data Split**: The dataset is split into training and test sets with an 80-20 ratio using `train_test_split`.
+- **Training the Models**: The models are trained using the `fit` method, with early stopping based on validation loss to prevent overfitting.
+
 
 
 
