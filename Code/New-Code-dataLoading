@@ -1,0 +1,123 @@
+import os 
+import glob
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import random
+from tqdm import tqdm
+
+from skimage import io, transform
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+from sklearn.preprocessing import LabelEncoder
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader
+from torchsummary import summary
+from torch.autograd import Variable
+from PIL import Image
+from torchvision import models, transforms
+
+import time
+import cv2
+import gc
+
+# ----------------------- Load Metadata -----------------------
+metadata_path = '/home/anshul/DIP_Project/dataset/HAM10000_metadata.csv'
+skin_df = pd.read_csv(metadata_path)
+
+# ----------------------- Check for Missing Data -----------------------
+def check_for_missing_data(df):
+    summary = pd.DataFrame(df.dtypes, columns=['dtypes'])
+    summary = summary.reset_index()
+    summary['Name'] = summary['index']
+    summary = summary[['Name', 'dtypes']]
+    summary['Missing'] = df.isnull().sum().values
+    return summary
+
+print(check_for_missing_data(skin_df))
+
+# Fill missing age with mean and convert to integer
+skin_df['age'].fillna(skin_df['age'].mean(), inplace=True)
+
+def convert_float_to_int(df, column_name):
+    if df[column_name].dtype == 'float64':
+        df[column_name] = df[column_name].astype(int)
+    return df
+
+skin_df = convert_float_to_int(skin_df, 'age')
+skin_df.info()
+
+# ----------------------- Duplicate & Null Checks -----------------------
+def check_for_duplicate_rows(df):
+    size = df.shape
+    sum_duplicates = df.duplicated().sum()
+    sum_null = df.isnull().sum()
+    print("Number of Samples:", size[0])
+    print("Duplicated Entries:", sum_duplicates)
+    print("Null Entries:\n", sum_null)
+
+check_for_duplicate_rows(skin_df)
+
+# Remove duplicate lesion samples
+lesion_id_cnt = skin_df['lesion_id'].value_counts()
+
+def check_duplicates_lesions(lesion_id):
+    return lesion_id_cnt[lesion_id] > 1
+
+skin_df['dup_les'] = skin_df['lesion_id'].map(check_duplicates_lesions)
+print(skin_df['dup_les'].value_counts())
+skin_df = skin_df[skin_df.dup_les == False]
+print("Shape after removing duplicate lesions:", skin_df.shape)
+
+# ----------------------- Load Image Paths -----------------------
+base1_path = '/home/anshul/DIP_Project/dataset/HAM10000_images_part_1'
+base2_path = '/home/anshul/DIP_Project/dataset/HAM10000_images_part_2'
+
+# Create a dictionary of image_id: full_path
+image_path_dict = {
+    os.path.splitext(os.path.basename(x))[0]: x
+    for x in glob.glob(os.path.join('/home/anshul/DIP_Project/dataset', '*', '*.jpg'))
+}
+
+image_paths = []
+for index, row in skin_df.iterrows():
+    image_id = row['image_id']
+    path1 = os.path.join(base1_path, f'{image_id}.jpg')
+    path2 = os.path.join(base2_path, f'{image_id}.jpg')
+    if os.path.exists(path1):
+        image_paths.append(path1)
+    elif os.path.exists(path2):
+        image_paths.append(path2)
+    else:
+        print(f'Image {image_id} not found in either part 1 or part 2.')
+
+skin_df['image_path'] = image_paths
+
+# ----------------------- Load Images -----------------------
+skin_df['image'] = skin_df['image_path'].map(
+    lambda x: np.asarray(Image.open(x)) if pd.notnull(x) and os.path.exists(x) else None
+)
+
+# ----------------------- Class Distribution -----------------------
+unique_classes = skin_df['dx'].unique()
+print("Unique classes:", unique_classes)
+
+count = skin_df['dx'].value_counts().sort_index()
+print("Class counts:\n", count)
+
+# Plot initial class distribution
+plt.figure(figsize=(8, 8))
+count.plot(kind='pie', ylabel='Count', autopct='%1.1f%%', startangle=140)
+plt.title('Class Distribution')
+plt.show()
+
+# ----------------------- Label Encoding -----------------------
+enum_labels = {'bkl': 0, 'nv': 1, 'df': 2, 'mel': 3, 'vasc': 4, 'bcc': 5, 'akiec': 6}
+skin_df['dx_cat'] = skin_df['dx'].replace(enum_labels)
+
+# Save processed DataFrame
+skin_df.to_csv('DATA.csv', index=False)
