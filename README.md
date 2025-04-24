@@ -14,7 +14,7 @@ Dataset Link: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.79
    - Each image is read using the `PIL` library and stored in the `skin_df` DataFrame.
 
 2. **Image Visualization**:
-   - We sample **5 images** from each category (`dx`) and display them in a grid.
+   - Sampled **5 images** from each category (`dx`) and display them in a grid.
    - Images are displayed at their original resolution without resizing to maintain their quality.
    - **Matplotlib** is used to create subplots and visualize the sampled images, and we save the final plot at **DPI 500** to ensure high-quality output.
 
@@ -31,11 +31,27 @@ This section visualizes key features of the **HAM10000** dataset to understand t
 - **Sex Distribution (`'sex'`)**: A bar plot showing the gender distribution of patients with skin lesions.
 - **Age Distribution (`'age'`)**: A histogram visualizing the age range of patients affected by skin lesions.
 
-These visualizations help to better understand the dataset’s structure and guide further analysis.
+These visualizations help to better understand the dataset’s structure and guide further analysis
 
 
+ 6. **Model Training**  
+This section describes the deep learning models used for skin lesion classification:  
 
-## Future Steps:
-- **Data Augmentation**: To enhance model performance, we can implement augmentation techniques such as rotation, flipping, and zooming.
-- **Model Training**: We plan to apply machine learning or deep learning models for skin lesion classification based on this dataset.
-- **Evaluation and Metrics**: We will evaluate the model's performance using metrics like accuracy, precision, recall, and F1-score.
+- **ResNet50**: A deep neural network with 50 layers and residual connections that improve accuracy and prevent the vanishing gradient problem, making deep models more trainable.  
+- **InceptionV3**: A deep learning model that uses multiple kernel sizes in a single layer to capture diverse spatial features, enhancing classification performance.  
+- **DenseNet121**: A densely connected convolutional network with 121 layers, where each layer is connected to every other layer, improving feature reuse, gradient flow, and model efficiency.
+
+  ![flowdiagram](https://github.com/user-attachments/assets/0bd792fa-1991-4ac8-b123-3bc4504ab0ae)
+  
+
+
+### Model Training Workflow
+
+- **Data Split**: The dataset is split into training and test sets with an 80-20 ratio using `train_test_split`.
+- **Training the Models**: The models are trained using the `fit` method, with early stopping based on validation loss to prevent overfitting.
+
+7. **BERT model**
+In the upcoming weeks, we will extend the current model by extracting features using BERT for the dx_type and localization columns of the HAM10000 dataset. These features will be used to combine with other baseline model features for improved classification.
+
+
+- 
