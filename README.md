@@ -34,24 +34,45 @@ This section visualizes key features of the **HAM10000** dataset to understand t
 These visualizations help to better understand the dataset’s structure and guide further analysis
 
 
- 6. **Model Training**  
-This section describes the deep learning models used for skin lesion classification:  
+## 6. **Model Training**
 
-- **ResNet50**: A deep neural network with 50 layers and residual connections that improve accuracy and prevent the vanishing gradient problem, making deep models more trainable.  
-- **InceptionV3**: A deep learning model that uses multiple kernel sizes in a single layer to capture diverse spatial features, enhancing classification performance.  
-- **DenseNet121**: A densely connected convolutional network with 121 layers, where each layer is connected to every other layer, improving feature reuse, gradient flow, and model efficiency.
+This section describes the deep learning models used for skin lesion classification:
 
-  ![flowdiagram](https://github.com/user-attachments/assets/0bd792fa-1991-4ac8-b123-3bc4504ab0ae)
-  
+- **ResNet50**: A deep convolutional neural network with 50 layers and residual connections. It helps in training very deep networks by solving the vanishing gradient problem and improves model accuracy.
 
+- **DenseNet121**: A densely connected CNN with 121 layers. Each layer connects to every other layer, which promotes feature reuse, improves gradient flow, and enhances learning efficiency.
 
-### Model Training Workflow
+- **ALBEF (Align Before Fuse)**: A multimodal model that combines image features with text information using a vision transformer and BERT. It aligns image and text embeddings before fusing them, allowing for better classification by including metadata such as `dx_type` and `localization`.
 
-- **Data Split**: The dataset is split into training and test sets with an 80-20 ratio using `train_test_split`.
-- **Training the Models**: The models are trained using the `fit` method, with early stopping based on validation loss to prevent overfitting.
+![flowdiagram](https://github.com/user-attachments/assets/0bd792fa-1991-4ac8-b123-3bc4504ab0ae)
 
-7. **BERT model**
-In the upcoming weeks, we will extend the current model by extracting features using BERT for the dx_type and localization columns of the HAM10000 dataset. These features will be used to combine with other baseline model features for improved classification.
+### 📌 Model Training Workflow
+
+- **Data Split**: The dataset is divided into training, validation, and test sets using an 80-10-10 ratio with `train_test_split`.
+- **Training the Models**: All models are trained using the `fit` method with early stopping to avoid overfitting.
+- **Code Location**: All model training scripts are located in the `code` folder:
+  - `RESENET50-Final.py` — ResNet50 model training
+  - `DenseNet121-Final.py` — DenseNet121 model training
+  - `ALBEF_Model_Code-Final.py` — ALBEF multimodal model training
+
+---
+
+## 7. **ALBEF Plots & Evaluation**
+
+To visualize the performance of the ALBEF model, the following file is used:
+
+- `ALBEF_Model_Curve_.py` — Generates accuracy and loss plots for training and validation.
+
+---
+
+## 8. **Data Loading and Exploration**
+
+Before training, the dataset is loaded, cleaned, and explored:
+
+- **`New-Code-dataLoading`** — Loads raw image and metadata files and creates a structured CSV file.
+- **`Data Exploration.ipynb`** — A notebook for analyzing the dataset, plotting class distribution, and exploring metadata.
+
+🗂️ **All code files are available in the `code` folder** for easy access and execution.
 
 
 - 
