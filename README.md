@@ -44,7 +44,6 @@ This section describes the deep learning models used for skin lesion classificat
 
 - **ALBEF (Align Before Fuse)**: A multimodal model that combines image features with text information using a vision transformer and BERT. It aligns image and text embeddings before fusing them, allowing for better classification by including metadata such as `dx_type` and `localization`.
 
-![flowdiagram](https://github.com/user-attachments/assets/0bd792fa-1991-4ac8-b123-3bc4504ab0ae)
 
 ### 📌 Model Training Workflow
 
