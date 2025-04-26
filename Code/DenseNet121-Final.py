@@ -24,6 +24,8 @@ label_encoder = LabelEncoder()
 data['label'] = label_encoder.fit_transform(data['dx_cat'])  # change 'dx_cat' if needed
 class_names = label_encoder.classes_
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # Image parameters
 img_h, img_w = 224, 224
 norm_means = [0.77148203, 0.55764165, 0.58345652]
@@ -46,15 +48,9 @@ class HAM10000Dataset(Dataset):
             image = self.transform(image)
         return image, label
 
-# Data augmentation and normalizer
+# Transforms
 transform = transforms.Compose([
     transforms.Resize((img_h, img_w)),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation(15),
-    transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),
-    transforms.RandomVerticalFlip(),
-    transforms.RandomAffine(degrees=15, translate=(0.1, 0.1)),  # Added affine transformation
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),  # Added color jitter
     transforms.ToTensor(),
     transforms.Normalize(mean=norm_means, std=norm_std)
 ])
@@ -65,8 +61,8 @@ val_data, test_data = train_test_split(temp_data, test_size=0.5, stratify=temp_d
 
 # Data balancing (oversample minority classes in training data)
 max_count = train_data['label'].value_counts().max()
-balanced_train_data = pd.concat([ 
-    train_data[train_data['label'] == label].sample(max_count, replace=True, random_state=42) 
+balanced_train_data = pd.concat([
+    train_data[train_data['label'] == label].sample(max_count, replace=True, random_state=42)
     for label in train_data['label'].unique()
 ], ignore_index=True).sample(frac=1, random_state=42).reset_index(drop=True)
 
@@ -80,29 +76,27 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-# Model initializer for ResNet18 with Dropout layer
-def initialise_model(model_name, num_classes, feature_extract=True, use_pretrained=True):
-    if model_name == 'resnet18':
-        model = models.resnet18(pretrained=use_pretrained)
-        
-        # Freeze parameters if feature extraction
+# Calculate class weights based on the frequency of each class in the training data
+class_weights = 1. / train_data['label'].value_counts().values
+class_weights = torch.tensor(class_weights, dtype=torch.float32).to(device)
+
+# Modify the criterion to use class weights
+criterion = nn.CrossEntropyLoss(weight=class_weights).to(device)
+
+# Model initializer
+def initialise_model(model_name, num_classes, feature_extract=False, use_pretrained=True):
+    if model_name == 'densenet_pret':
+        model = models.densenet121(weights=models.DenseNet121_Weights.IMAGENET1K_V1 if use_pretrained else None)
         if feature_extract:
             for param in model.parameters():
                 param.requires_grad = False
-
-        # Replace the final fully connected layer
-        num_ftrs = model.fc.in_features
-        model.fc = nn.Sequential(
-            nn.Linear(num_ftrs, num_classes),
-            nn.Dropout(0.5)  # Adding Dropout for regularization
-        )
-    
+        num_ftrs = model.classifier.in_features
+        model.classifier = nn.Linear(num_ftrs, num_classes)
     else:
-        raise ValueError(f"Model {model_name} not supported.")
-    
+        raise ValueError(f"Model {model_name} not recognized")
     return model
 
-# Training function with L2 Regularization (weight decay)
+# Training function
 def train_and_validate_model(model, train_loader, val_loader, test_loader, criterion, patience, optimizer, device, epochs, model_filename, verbose=False):
     best_val_loss = float('inf')
     early_stopping_counter = 0
@@ -166,94 +160,110 @@ def train_and_validate_model(model, train_loader, val_loader, test_loader, crite
         if verbose:
             print(f"Epoch [{epoch+1}/{epochs}], Train Loss: {avg_train_loss:.4f}, Train Acc: {train_accuracy:.4f}, Val Loss: {avg_val_loss:.4f}, Val Acc: {val_accuracy:.4f}")
 
-    return model, train_loss_history, val_loss_history, train_acc_history, val_acc_history, all_labels, all_preds, all_probs
+    # Plot and save loss and accuracy curves
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.plot(range(len(train_loss_history)), train_loss_history, label='Train Loss')
 
-# Plotting training and validation curves
-def plot_training_validation_curve(train_loss_history, val_loss_history, train_acc_history, val_acc_history):
-    # Plot Loss curve
-    plt.figure(figsize=(8, 6))
-    plt.plot(range(1, len(train_loss_history) + 1), train_loss_history, label='Training Loss')
-    plt.plot(range(1, len(val_loss_history) + 1), val_loss_history, label='Validation Loss')
-    plt.title('Training and Validation Loss')
+    plt.plot(range(len(val_loss_history)), val_loss_history, label='Validation Loss')
+    plt.title('Loss Curve')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.tight_layout()
-    plt.savefig('18training_validation_loss_curve.png')
-    plt.show()
 
-    # Plot Accuracy curve
-    plt.figure(figsize=(8, 6))
-    plt.plot(range(1, len(train_acc_history) + 1), train_acc_history, label='Training Accuracy')
-    plt.plot(range(1, len(val_acc_history) + 1), val_acc_history, label='Validation Accuracy')
-    plt.title('Training and Validation Accuracy')
+    plt.subplot(1, 2, 2)
+    plt.plot(range(len(train_acc_history)), train_acc_history, label='Train Accuracy')
+    plt.plot(range(len(val_acc_history)), val_acc_history, label='Validation Accuracy')
+    plt.title('Accuracy Curve')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
-    plt.tight_layout()
-    plt.savefig('18training_validation_accuracy_curve.png')
-    plt.show()
 
-# Evaluate model and save metrics function
+    plt.tight_layout()
+    plt.savefig('loss_accuracy_curves.png')
+    print("Loss and accuracy curves saved to loss_accuracy_curves.png")
+
+    return model, train_loss_history, val_loss_history, train_acc_history, val_acc_history, all_labels, all_preds, all_probs
+
+# Evaluation
 def evaluate_and_save_metrics(model, test_loader, device, class_names):
     model.eval()
-    all_labels, all_preds, all_probs = [], [], []
-    test_loss, correct, total = 0.0, 0, 0
-    criterion = nn.CrossEntropyLoss()  # Use cross-entropy loss for evaluation
+    all_labels = []
+    all_preds = []
+    all_probs = []
 
     with torch.no_grad():
         for inputs, labels in test_loader:
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
-            loss = criterion(outputs, labels)
-
-            test_loss += loss.item()
             _, predicted = torch.max(outputs, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
 
             all_labels.extend(labels.cpu().numpy())
             all_preds.extend(predicted.cpu().numpy())
             all_probs.extend(torch.softmax(outputs, dim=1).cpu().numpy())
 
-    accuracy = correct / total
-    avg_test_loss = test_loss / len(test_loader)
+    # Test Accuracy
+    test_accuracy = accuracy_score(all_labels, all_preds)
+    print(f"Test Accuracy: {test_accuracy:.4f}")
 
-    # Calculate other metrics
-    precision = precision_score(all_labels, all_preds, average='weighted')
-    recall = recall_score(all_labels, all_preds, average='weighted')
-    f1 = f1_score(all_labels, all_preds, average='weighted')
-    auc = roc_auc_score(label_binarize(all_labels, classes=range(len(class_names))), np.array(all_probs), average='weighted', multi_class='ovr')
+    # Confusion matrix
+    cm = confusion_matrix(all_labels, all_preds)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
+    plt.xlabel('Predicted Labels')
+    plt.ylabel('True Labels')
+    plt.title('Confusion Matrix')
+    plt.tight_layout()
+    plt.savefig('11_densenet_confusion_matrix.png')
+    print("Confusion matrix saved to 11_densenet_confusion_matrix.png")
+    plt.close()
 
-    # Print and save metrics
-    print(f"Test Loss: {avg_test_loss:.4f}, Accuracy: {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}, Recall: {recall:.4f}, F1-Score: {f1:.4f}, AUC: {auc:.4f}")
+    # ROC AUC
+    all_labels_bin = label_binarize(all_labels, classes=range(len(class_names)))
+    roc_auc = roc_auc_score(all_labels_bin, all_probs, average='weighted', multi_class='ovr')
+    print(f"ROC AUC Score: {roc_auc:.4f}")
 
-    # Save metrics to a text file
-    with open('evaluation_metrics.txt', 'w') as f:
-        f.write(f"Test Loss: {avg_test_loss:.4f}\n")
-        f.write(f"Accuracy: {accuracy:.4f}\n")
-        f.write(f"Precision: {precision:.4f}\n")
-        f.write(f"Recall: {recall:.4f}\n")
-        f.write(f"F1-Score: {f1:.4f}\n")
-        f.write(f"AUC: {auc:.4f}\n")
+    # ROC Curve
+    fpr, tpr, _ = roc_curve(all_labels_bin.ravel(), np.array(all_probs).ravel())
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, color='b', label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic (ROC)')
+    plt.legend(loc='lower right')
+    plt.tight_layout()
+    plt.savefig('11_densenet_curve_roc.png')
+    print("ROC curve saved to final_densenet_curve_roc.png")
+    plt.close()
 
-# Model setup and training
+    # Save predictions
+    predictions_df = pd.DataFrame({
+        'True Labels': all_labels,
+        'Predictions': all_preds,
+        'Max Probabilities': np.max(all_probs, axis=1)
+    })
+    predictions_df.to_csv('11_densenet_predictions.csv', index=False)
+    print("Predictions saved to 11_densenet_predictions.csv")
+
+# Set parameters
+model_temp = 'densenet_pret'
+num_classes = len(class_names)
+feature_extract = False
+use_pretrained = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = initialise_model('resnet18', num_classes=len(class_names), feature_extract=True, use_pretrained=True).to(device)
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)  # Added L2 Regularization
-epochs = 25
-patience = 5
-model_filename = 'best_resnet18_model.pth'
+epochs = 20
+patience = 7
+model_filename = 'final_densenet_pret.pth'
 
-# Train and validate model
-model, train_loss_history, val_loss_history, train_acc_history, val_acc_history, all_labels, all_preds, all_probs = train_and_validate_model(
-    model, train_loader, val_loader, test_loader, criterion, patience, optimizer, device, epochs, model_filename
-)
+# Initialize and train model
+model = initialise_model(model_temp, num_classes, feature_extract, use_pretrained)
+model.to(device)
 
-# Plot curves
-plot_training_validation_curve(train_loss_history, val_loss_history, train_acc_history, val_acc_history)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-# Evaluate on test set and save metrics
+model, train_loss, val_loss, train_acc, val_acc, all_labels, all_preds, all_probs = train_and_validate_model(
+    model, train_loader, val_loader, test_loader, criterion, patience, optimizer, device, epochs, model_filename, verbose=True)
+
+# Final evaluation
 evaluate_and_save_metrics(model, test_loader, device, class_names)

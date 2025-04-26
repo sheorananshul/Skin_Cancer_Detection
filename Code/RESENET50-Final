@@ -245,7 +245,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)  # Adding L2 regularization here
 epochs = 25
 model_filename = 'best_resnet50_model.pth'
-patience = 3
+patience = 10
 
 # Train and validate model
 start_time = time.time()
